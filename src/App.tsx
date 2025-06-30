@@ -4,11 +4,13 @@ import { InputStep } from './components/InputStep';
 import { ThemeStep } from './components/ThemeStep';
 import { PreviewStep } from './components/PreviewStep';
 import { DeployStep } from './components/DeployStep';
+import { HistoryStep } from './components/HistoryStep';
+import { HistoryProvider } from './contexts/HistoryContext';
 import { ProjectInfo, ThemeOption, GeneratedPage, Step } from './types';
 import { buildLandingPage } from './utils/pageGenerator';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Clock } from 'lucide-react';
 
-function App() {
+function AppContent() {
   const [currentStep, setCurrentStep] = useState<Step>('input');
   const [projectInfo, setProjectInfo] = useState<ProjectInfo | null>(null);
   const [selectedTheme, setSelectedTheme] = useState<ThemeOption | null>(null);
@@ -53,6 +55,17 @@ function App() {
     setGeneratedPage(null);
   };
 
+  const handleViewHistory = () => {
+    setCurrentStep('history');
+  };
+
+  const handleCreateNew = () => {
+    setCurrentStep('input');
+    setProjectInfo(null);
+    setSelectedTheme(null);
+    setGeneratedPage(null);
+  };
+
   const handleBack = () => {
     switch (currentStep) {
       case 'theme':
@@ -63,6 +76,9 @@ function App() {
         break;
       case 'deploy':
         setCurrentStep('preview');
+        break;
+      case 'history':
+        setCurrentStep('input');
         break;
     }
   };
@@ -79,10 +95,23 @@ function App() {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Create professional landing pages in minutes with AI-powered design and content generation
           </p>
+          
+          {/* History Button */}
+          {currentStep !== 'history' && (
+            <div className="mt-6">
+              <button
+                onClick={handleViewHistory}
+                className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              >
+                <Clock className="w-4 h-4" />
+                <span>View Deployment History</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Step Indicator */}
-        {currentStep !== 'deploy' && (
+        {currentStep !== 'deploy' && currentStep !== 'history' && (
           <StepIndicator
             currentStep={stepIndex}
             totalSteps={steps.length}
@@ -103,7 +132,7 @@ function App() {
             />
           )}
           
-          {currentStep === 'preview' && projectInfo && selectedTheme && generatedPage && (
+          {currentStep === 'preview' && projectInfo && selectedTheme && (
             <PreviewStep
               projectInfo={projectInfo}
               selectedTheme={selectedTheme}
@@ -121,11 +150,27 @@ function App() {
               generatedPage={generatedPage}
               onBack={handleBack}
               onRestart={handleRestart}
+              onViewHistory={handleViewHistory}
+            />
+          )}
+
+          {currentStep === 'history' && (
+            <HistoryStep
+              onCreateNew={handleCreateNew}
+              onBack={handleBack}
             />
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <HistoryProvider>
+      <AppContent />
+    </HistoryProvider>
   );
 }
 

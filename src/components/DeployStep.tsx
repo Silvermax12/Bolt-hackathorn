@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, Globe, Copy, ExternalLink, Sparkles, AlertCircle } from 'lucide-react';
+import { CheckCircle, Globe, Copy, ExternalLink, Sparkles, AlertCircle, Clock } from 'lucide-react';
 import type { GeneratedPage, ThemeOption } from '../types';
 import { deployLandingPage } from '../services/api';
+import { useHistory } from '../contexts/HistoryContext';
 
 // Backend API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://bolt-hackathorn.onrender.com';
@@ -13,6 +14,7 @@ interface DeployStepProps {
   generatedPage?: GeneratedPage | null;
   onBack: () => void;
   onRestart: () => void;
+  onViewHistory: () => void;
 }
 
 export const DeployStep: React.FC<DeployStepProps> = ({ 
@@ -21,7 +23,8 @@ export const DeployStep: React.FC<DeployStepProps> = ({
   selectedTheme,
   generatedPage, 
   onBack, 
-  onRestart 
+  onRestart,
+  onViewHistory
 }) => {
   const [deployStatus, setDeployStatus] = useState<'deploying' | 'success' | 'error'>('deploying');
   const [progress, setProgress] = useState(0);
@@ -29,6 +32,8 @@ export const DeployStep: React.FC<DeployStepProps> = ({
   const [deployUrl, setDeployUrl] = useState('');
   const [claimUrl, setClaimUrl] = useState('');
   const [error, setError] = useState('');
+  
+  const { addDeployment } = useHistory();
 
   useEffect(() => {
     const deployToNetlify = async () => {
@@ -75,6 +80,18 @@ export const DeployStep: React.FC<DeployStepProps> = ({
           setDeployUrl(data.url);
           setClaimUrl(data.admin_url || '');
           
+          // Add to deployment history
+          addDeployment({
+            projectName,
+            projectDescription,
+            themeName: selectedTheme.name,
+            url: data.url,
+            adminUrl: data.admin_url,
+            deployedAt: data.deployed_at,
+            siteId: data.site_id,
+            deployId: data.deploy_id
+          });
+          
           setTimeout(() => {
             setDeployStatus('success');
           }, 1000);
@@ -90,7 +107,7 @@ export const DeployStep: React.FC<DeployStepProps> = ({
     };
 
     deployToNetlify();
-  }, [projectName, projectDescription, selectedTheme, generatedPage]);
+  }, [projectName, projectDescription, selectedTheme, generatedPage, addDeployment]);
 
   const copyToClipboard = () => {
     if (deployUrl) {
@@ -167,7 +184,7 @@ export const DeployStep: React.FC<DeployStepProps> = ({
           <CheckCircle className="w-10 h-10 text-green-600" />
         </div>
         <h2 className="text-3xl font-bold text-gray-900 mb-4">Deployment Complete!</h2>
-        <p className="text-gray-600">Your landing page has been successfully deployed to Netlify</p>
+        <p className="text-gray-600">Your landing page has been successfully deployed to Netlify and added to your history</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
@@ -190,59 +207,50 @@ export const DeployStep: React.FC<DeployStepProps> = ({
                 </button>
               </div>
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => window.open(deployUrl, '_blank')}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+            
+            <div className="flex gap-3 mb-4">
+              <a
+                href={deployUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
-                <span>View Live Site</span>
                 <ExternalLink className="w-5 h-5" />
-              </button>
+                <span>Visit Live Site</span>
+              </a>
               
               {claimUrl && (
-                <button
-                  onClick={() => window.open(claimUrl, '_blank')}
-                  className="border border-blue-600 text-blue-600 font-semibold py-3 px-6 rounded-lg hover:bg-blue-50 transition-colors"
+                <a
+                  href={claimUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 border border-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center space-x-2"
                 >
-                  Manage on Netlify
-                </button>
+                  <Globe className="w-5 h-5" />
+                  <span>Manage</span>
+                </a>
               )}
             </div>
-
-            {claimUrl && (
-              <div className="bg-blue-50 rounded-lg p-4 mt-4">
-                <p className="text-sm text-blue-800">
-                  <strong>Transfer Ownership:</strong> Use the "Manage on Netlify" button to claim this site and transfer it to your Netlify account.
-                </p>
-              </div>
-            )}
           </>
         ) : (
-          <div className="text-center">
-            <p className="text-gray-600 mb-4">Waiting for deployment URL...</p>
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          </div>
+          <p className="text-gray-600">Deployment completed successfully!</p>
         )}
       </div>
 
-      <button
-        onClick={onRestart}
-        className="border border-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg hover:bg-gray-50 transition-colors"
-      >
-        Create Another Page
-      </button>
-
-      <div className="bg-blue-50 rounded-lg p-4 mt-6">
-        <h3 className="font-semibold text-blue-900 mb-2">What's included:</h3>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Fully responsive design</li>
-          <li>• SEO optimized meta tags</li>
-          <li>• Contact form integration</li>
-          <li>• Social media links</li>
-          <li>• Analytics tracking ready</li>
-          <li>• Deployed on Netlify CDN</li>
-        </ul>
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <button
+          onClick={onViewHistory}
+          className="border border-blue-300 text-blue-700 font-semibold py-3 px-6 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
+        >
+          <Clock className="w-5 h-5" />
+          <span>View History</span>
+        </button>
+        <button
+          onClick={onRestart}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+        >
+          Create Another
+        </button>
       </div>
     </div>
   );

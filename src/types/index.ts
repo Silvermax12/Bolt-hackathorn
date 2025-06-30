@@ -39,4 +39,23 @@ export interface GeneratedPage {
   analyticsId?: string;
 }
 
-export type Step = 'input' | 'theme' | 'preview' | 'deploy';
+export interface DeploymentRecord {
+  id: string;
+  projectName: string;
+  projectDescription: string;
+  themeName: string;
+  url: string;
+  adminUrl?: string;
+  deployedAt: string;
+  siteId: string;
+  deployId: string;
+}
+
+export interface HistoryContextType {
+  deployments: DeploymentRecord[];
+  addDeployment: (deployment: Omit<DeploymentRecord, 'id'>) => void;
+  removeDeployment: (id: string) => void;
+  clearHistory: () => void;
+}
+
+export type Step = 'input' | 'theme' | 'preview' | 'deploy' | 'history';
