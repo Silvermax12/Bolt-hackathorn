@@ -3,7 +3,7 @@ import { CheckCircle, Globe, Copy, ExternalLink, Sparkles, AlertCircle } from 'l
 import type { GeneratedPage } from '../types';
 
 // Backend API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://bolt-hackathorn.onrender.com';
 
 interface DeployStepProps {
   projectName: string;
