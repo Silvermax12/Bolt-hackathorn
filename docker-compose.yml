@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Backend Flask API
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_DEBUG=true
+      - FLASK_ENV=development
+      - MAX_DEPLOYS_PER_HOUR=50
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__  # Exclude cache directory
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend React App (for development)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - /app/node_modules  # Exclude node_modules from volume mount
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  default:
+    name: landing-page-generator 
