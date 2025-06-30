@@ -24,15 +24,21 @@ function App() {
     setCurrentStep('theme');
   };
 
-  const handleThemeSelect = (theme: ThemeOption) => {
+  const handleThemeSelect = async (theme: ThemeOption) => {
     setSelectedTheme(theme);
     if (projectInfo) {
-      const page = buildLandingPage({
-        ...projectInfo,
-        themeChoice: theme
-      });
-      setGeneratedPage(page);
-      setCurrentStep('preview');
+      try {
+        const page = await buildLandingPage({
+          ...projectInfo,
+          themeChoice: theme
+        });
+        setGeneratedPage(page);
+        setCurrentStep('preview');
+      } catch (error) {
+        console.error('Error generating page:', error);
+        // Still proceed to preview with null page - the PreviewStep should handle this
+        setCurrentStep('preview');
+      }
     }
   };
 
@@ -107,9 +113,11 @@ function App() {
             />
           )}
           
-          {currentStep === 'deploy' && projectInfo && (
+          {currentStep === 'deploy' && projectInfo && selectedTheme && (
             <DeployStep
               projectName={projectInfo.projectName}
+              projectDescription={projectInfo.projectDescription}
+              selectedTheme={selectedTheme}
               generatedPage={generatedPage}
               onBack={handleBack}
               onRestart={handleRestart}

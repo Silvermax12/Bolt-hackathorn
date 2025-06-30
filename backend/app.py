@@ -9,6 +9,7 @@ from flask_cors import CORS
 from jinja2 import Template
 import secrets
 import string
+import random
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -80,18 +81,18 @@ class NetlifyDeployer:
             raise Exception(f"Failed to deploy site: {response.text}")
 
 class HTMLGenerator:
-    """Generates HTML landing pages from templates"""
+    """Generates HTML content for landing pages"""
     
     @staticmethod
     def generate_site_name():
-        """Generate a unique site name for Netlify"""
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        random_suffix = ''.join(secrets.choice(string.ascii_lowercase) for _ in range(6))
+        """Generate a unique site name"""
+        timestamp = int(datetime.now().timestamp())
+        random_suffix = ''.join(random.choices(string.ascii_lowercase, k=4))
         return f"landing-{timestamp}-{random_suffix}"
     
     @staticmethod
     def create_html_template():
-        """Create the HTML template for landing pages"""
+        """Create Jinja2 template for HTML generation"""
         return Template("""
 <!DOCTYPE html>
 <html lang="en">
@@ -100,10 +101,20 @@ class HTMLGenerator:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
     <meta name="description" content="{{ description }}">
-    <meta name="keywords" content="{{ title }}, landing page, business">
+    <meta name="keywords" content="landing page, business, professional, {{ title }}">
+    <meta name="author" content="{{ title }}">
+    
+    <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="{{ title }}">
     <meta property="og:description" content="{{ description }}">
     <meta property="og:type" content="website">
+    <meta property="og:image" content="/og-image.jpg">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ title }}">
+    <meta name="twitter:description" content="{{ description }}">
+    <meta name="twitter:image" content="/og-image.jpg">
     
     <style>
         * {
@@ -113,11 +124,10 @@ class HTMLGenerator:
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            color: {{ theme.colors.text if theme else '#333' }};
+            overflow-x: hidden;
         }
         
         .container {
@@ -126,74 +136,102 @@ class HTMLGenerator:
             padding: 0 20px;
         }
         
-        /* Header */
+        /* Header Section */
         .header {
+            background: {{ theme.colors.primary if theme else 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }};
+            {% if theme and theme.colors %}
+            background: linear-gradient(135deg, {{ theme.colors.primary }} 0%, {{ theme.colors.secondary }} 100%);
+            {% endif %}
+            color: white;
             padding: 100px 0;
             text-align: center;
-            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" preserveAspectRatio="none"><polygon fill="rgba(255,255,255,0.1)" points="1000,0 1000,100 0,100"/></svg>');
+            background-size: cover;
         }
         
         .header h1 {
             font-size: 3.5rem;
             font-weight: 700;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
         }
         
         .header p {
             font-size: 1.3rem;
-            max-width: 800px;
-            margin: 0 auto 40px;
-            opacity: 0.9;
+            margin-bottom: 40px;
+            opacity: 0.95;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+            z-index: 1;
         }
         
         .cta-button {
             display: inline-block;
-            background: #ff6b6b;
+            background: {{ theme.colors.accent if theme else '#ff6b6b' }};
             color: white;
-            padding: 15px 30px;
+            padding: 18px 40px;
             text-decoration: none;
             border-radius: 50px;
             font-weight: 600;
             font-size: 1.1rem;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         
         .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
         }
         
         /* Features Section */
         .features {
-            background: white;
-            padding: 80px 0;
+            padding: 100px 0;
+            background: {{ theme.colors.background if theme else '#f8f9fa' }};
         }
         
         .features h2 {
             text-align: center;
             font-size: 2.5rem;
             margin-bottom: 60px;
-            color: #333;
+            color: {{ theme.colors.text if theme else '#2c3e50' }};
         }
         
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 40px;
+            margin-top: 60px;
         }
         
         .feature-card {
-            text-align: center;
+            background: white;
             padding: 40px 30px;
             border-radius: 15px;
-            background: #f8f9fa;
-            transition: transform 0.3s ease;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-top: 4px solid {{ theme.colors.accent if theme else '#3498db' }};
         }
         
         .feature-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
         
         .feature-icon {
@@ -204,19 +242,22 @@ class HTMLGenerator:
         .feature-card h3 {
             font-size: 1.5rem;
             margin-bottom: 15px;
-            color: #333;
+            color: {{ theme.colors.text if theme else '#2c3e50' }};
         }
         
         .feature-card p {
-            color: #666;
-            line-height: 1.6;
+            color: {{ theme.colors.text if theme else '#666' }};
+            opacity: 0.8;
         }
         
         /* Contact Section */
         .contact {
-            background: #2c3e50;
+            padding: 100px 0;
+            background: {{ theme.colors.primary if theme else 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }};
+            {% if theme and theme.colors %}
+            background: linear-gradient(135deg, {{ theme.colors.primary }} 0%, {{ theme.colors.secondary }} 100%);
+            {% endif %}
             color: white;
-            padding: 80px 0;
             text-align: center;
         }
         
@@ -261,7 +302,7 @@ class HTMLGenerator:
         .form-group input:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #ff6b6b;
+            border-color: {{ theme.colors.accent if theme else '#ff6b6b' }};
             background: rgba(255, 255, 255, 0.15);
         }
         
@@ -271,7 +312,7 @@ class HTMLGenerator:
         }
         
         .submit-button {
-            background: #ff6b6b;
+            background: {{ theme.colors.accent if theme else '#ff6b6b' }};
             color: white;
             padding: 15px 40px;
             border: none;
@@ -283,8 +324,8 @@ class HTMLGenerator:
         }
         
         .submit-button:hover {
-            background: #ff5252;
             transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         
         /* Footer */
@@ -300,7 +341,7 @@ class HTMLGenerator:
         }
         
         .social-links a {
-            color: #ff6b6b;
+            color: {{ theme.colors.accent if theme else '#ff6b6b' }};
             text-decoration: none;
             margin: 0 15px;
             font-weight: 500;
@@ -308,7 +349,36 @@ class HTMLGenerator:
         }
         
         .social-links a:hover {
-            color: #ff5252;
+            opacity: 0.8;
+        }
+        
+        /* Built with Bolt.new Badge */
+        .bolt-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .bolt-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            color: white;
+        }
+        
+        .bolt-badge::before {
+            content: '⚡';
+            margin-right: 6px;
         }
         
         /* Responsive Design */
@@ -328,6 +398,13 @@ class HTMLGenerator:
             
             .features-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .bolt-badge {
+                bottom: 10px;
+                right: 10px;
+                padding: 6px 12px;
+                font-size: 0.8rem;
             }
         }
     </style>
@@ -400,6 +477,11 @@ class HTMLGenerator:
         </div>
     </footer>
 
+    <!-- Built with Bolt.new Badge -->
+    <a href="https://bolt.new" target="_blank" class="bolt-badge">
+        Built with Bolt.new
+    </a>
+
     <script>
         // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -447,15 +529,16 @@ class HTMLGenerator:
         """)
     
     @classmethod
-    def generate_landing_page(cls, title, description):
-        """Generate HTML content for a landing page"""
+    def generate_landing_page(cls, title, description, theme=None):
+        """Generate HTML content for a landing page with optional theme"""
         template = cls.create_html_template()
         current_year = datetime.now().year
         
         return template.render(
             title=title,
             description=description,
-            current_year=current_year
+            current_year=current_year,
+            theme=theme
         )
     
     @staticmethod
@@ -526,7 +609,18 @@ def deploy_landing_page():
     Expected JSON payload:
     {
         "title": "My Project",
-        "description": "A great project description"
+        "description": "A great project description",
+        "theme": {
+            "id": "custom",
+            "name": "My Theme",
+            "colors": {
+                "primary": "#3B82F6",
+                "secondary": "#1E40AF",
+                "accent": "#F59E0B",
+                "text": "#1F2937",
+                "background": "#FFFFFF"
+            }
+        }
     }
     """
     try:
@@ -547,6 +641,7 @@ def deploy_landing_page():
         
         title = data.get('title', '').strip()
         description = data.get('description', '').strip()
+        theme = data.get('theme')  # Optional theme data
         
         if not title:
             return jsonify({'error': 'Title is required'}), 400
@@ -561,7 +656,7 @@ def deploy_landing_page():
         if len(description) > 500:
             return jsonify({'error': 'Description must be 500 characters or less'}), 400
         
-        logger.info(f"Starting deployment for: {title}")
+        logger.info(f"Starting deployment for: {title} with theme: {theme.get('name') if theme else 'default'}")
         
         # Initialize services
         deployer = NetlifyDeployer(config.NETLIFY_TOKEN)
@@ -569,8 +664,8 @@ def deploy_landing_page():
         # Generate unique site name
         site_name = HTMLGenerator.generate_site_name()
         
-        # Generate HTML content
-        html_content = HTMLGenerator.generate_landing_page(title, description)
+        # Generate HTML content with theme
+        html_content = HTMLGenerator.generate_landing_page(title, description, theme)
         
         # Create ZIP file
         zip_content = HTMLGenerator.create_zip_file(html_content)
@@ -593,6 +688,7 @@ def deploy_landing_page():
             'admin_url': deploy_info.get('admin_url'),
             'title': title,
             'description': description,
+            'theme': theme.get('name') if theme else 'default',
             'deployed_at': deploy_info['created_at']
         }), 200
         
@@ -611,7 +707,18 @@ def preview_landing_page():
     Expected JSON payload:
     {
         "title": "My Project",
-        "description": "A great project description"
+        "description": "A great project description",
+        "theme": {
+            "id": "custom",
+            "name": "My Theme",
+            "colors": {
+                "primary": "#3B82F6",
+                "secondary": "#1E40AF",
+                "accent": "#F59E0B",
+                "text": "#1F2937",
+                "background": "#FFFFFF"
+            }
+        }
     }
     """
     try:
@@ -621,6 +728,7 @@ def preview_landing_page():
         
         title = data.get('title', '').strip()
         description = data.get('description', '').strip()
+        theme = data.get('theme')  # Optional theme data
         
         if not title:
             return jsonify({'error': 'Title is required'}), 400
@@ -628,14 +736,15 @@ def preview_landing_page():
         if not description:
             return jsonify({'error': 'Description is required'}), 400
         
-        # Generate HTML content
-        html_content = HTMLGenerator.generate_landing_page(title, description)
+        # Generate HTML content with theme
+        html_content = HTMLGenerator.generate_landing_page(title, description, theme)
         
         return jsonify({
             'success': True,
             'html': html_content,
             'title': title,
-            'description': description
+            'description': description,
+            'theme': theme.get('name') if theme else 'default'
         }), 200
         
     except Exception as e:

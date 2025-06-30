@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, Globe, Copy, ExternalLink, Sparkles, AlertCircle } from 'lucide-react';
-import type { GeneratedPage } from '../types';
+import type { GeneratedPage, ThemeOption } from '../types';
+import { deployLandingPage } from '../services/api';
 
 // Backend API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://bolt-hackathorn.onrender.com';
 
 interface DeployStepProps {
   projectName: string;
+  projectDescription: string;
+  selectedTheme: ThemeOption;
   generatedPage?: GeneratedPage | null;
   onBack: () => void;
   onRestart: () => void;
@@ -14,6 +17,8 @@ interface DeployStepProps {
 
 export const DeployStep: React.FC<DeployStepProps> = ({ 
   projectName, 
+  projectDescription,
+  selectedTheme,
   generatedPage, 
   onBack, 
   onRestart 
@@ -30,6 +35,7 @@ export const DeployStep: React.FC<DeployStepProps> = ({
       const steps = [
         'Preparing deployment files...',
         'Creating HTML content...',
+        'Applying your theme...',
         'Generating unique site name...',
         'Creating Netlify site...',
         'Uploading to Netlify...',
@@ -61,33 +67,13 @@ export const DeployStep: React.FC<DeployStepProps> = ({
         setCurrentStep('Deploying to Netlify...');
         setProgress(90);
 
-        // Extract title and description from project name
-        // In a real implementation, you'd pass these from the form
-        const title = projectName;
-        const description = `Landing page for ${projectName} - created with AI Landing Page Generator`;
-
-        const response = await fetch(`${API_BASE_URL}/api/deploy`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: title,
-            description: description
-          })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Deployment failed');
-        }
+        const data = await deployLandingPage(projectName, projectDescription, selectedTheme);
 
         if (data.success) {
           setProgress(100);
           setCurrentStep('Deployment successful!');
           setDeployUrl(data.url);
-          setClaimUrl(data.admin_url);
+          setClaimUrl(data.admin_url || '');
           
           setTimeout(() => {
             setDeployStatus('success');
@@ -104,7 +90,7 @@ export const DeployStep: React.FC<DeployStepProps> = ({
     };
 
     deployToNetlify();
-  }, [projectName, generatedPage]);
+  }, [projectName, projectDescription, selectedTheme, generatedPage]);
 
   const copyToClipboard = () => {
     if (deployUrl) {

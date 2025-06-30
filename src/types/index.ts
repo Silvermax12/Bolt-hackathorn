@@ -15,6 +15,18 @@ export interface ThemeOption {
     background: string;
   };
   preview: string;
+  isCustom?: boolean;
+}
+
+export interface CustomTheme {
+  name: string;
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    text: string;
+    background: string;
+  };
 }
 
 export interface GeneratedPage {

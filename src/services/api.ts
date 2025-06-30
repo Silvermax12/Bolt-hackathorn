@@ -1,9 +1,12 @@
 // API configuration and service functions
-const API_BASE_URL = import.meta.env?.VITE_API_URL || 'https://bolt-hackathorn.onrender.com';
+import { GeneratedPage, ThemeOption } from '../types';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export interface DeployRequest {
   title: string;
   description: string;
+  theme?: ThemeOption;
 }
 
 export interface DeployResponse {
@@ -15,11 +18,14 @@ export interface DeployResponse {
   title: string;
   description: string;
   deployed_at: string;
+  error?: string;
+  message?: string;
 }
 
 export interface PreviewRequest {
   title: string;
   description: string;
+  theme?: ThemeOption;
 }
 
 export interface PreviewResponse {
@@ -27,6 +33,8 @@ export interface PreviewResponse {
   html: string;
   title: string;
   description: string;
+  error?: string;
+  message?: string;
 }
 
 export interface APIError {
@@ -54,13 +62,13 @@ class APIService {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || `HTTP error! status: ${response.status}`);
+        throw new Error(result.message || result.error || 'Deployment failed');
       }
 
       return result;
     } catch (error) {
       console.error('Deploy API error:', error);
-      throw error;
+      throw new Error(error instanceof Error ? error.message : 'Network error occurred');
     }
   }
 
@@ -77,13 +85,13 @@ class APIService {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || `HTTP error! status: ${response.status}`);
+        throw new Error(result.message || result.error || 'Preview generation failed');
       }
 
       return result;
     } catch (error) {
       console.error('Preview API error:', error);
-      throw error;
+      throw new Error(error instanceof Error ? error.message : 'Network error occurred');
     }
   }
 
@@ -133,4 +141,64 @@ export const formatDeployData = (projectName: string, projectDescription?: strin
     title: projectName.trim(),
     description: projectDescription?.trim() || `Landing page for ${projectName.trim()} - created with AI Landing Page Generator`
   };
+};
+
+export const deployLandingPage = async (
+  title: string,
+  description: string,
+  theme?: ThemeOption
+): Promise<DeployResponse> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/deploy`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title,
+        description,
+        theme,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'Deployment failed');
+    }
+
+    return data;
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Network error occurred');
+  }
+};
+
+export const previewLandingPage = async (
+  title: string,
+  description: string,
+  theme?: ThemeOption
+): Promise<PreviewResponse> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/preview`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title,
+        description,
+        theme,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'Preview generation failed');
+    }
+
+    return data;
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Network error occurred');
+  }
 }; 
