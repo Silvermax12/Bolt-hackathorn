@@ -3,8 +3,11 @@ services:
     name: landing-page-generator-backend
     env: python
     plan: free
+    region: oregon
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn -c gunicorn_config.py app:app
+    rootDir: backend
+    runtime: python-3.11
     envVars:
       - key: FLASK_ENV
         value: production
