@@ -50,7 +50,6 @@ npm install
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:5173`
 
 #### 2. Backend Setup
 
@@ -71,7 +70,6 @@ cp config.env.example .env
 python app.py
 ```
 
-The backend API will be available at `http://localhost:5000`
 
 #### 3. Get Your Netlify Token
 
@@ -182,7 +180,7 @@ MAX_DEPLOYS_PER_HOUR=10
 
 #### Frontend
 ```env
-VITE_API_URL=http://localhost:5000
+VITE_API_URL=http:
 ```
 
 ## 🔧 Development
@@ -294,9 +292,6 @@ FLASK_DEBUG=true
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
-
-MIT License - feel free to use this for commercial or personal projects.
 
 ## 🙋‍♂️ Support
 
